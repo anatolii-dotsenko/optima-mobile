@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +31,8 @@ import com.example.startupapp.ui.theme.StartupAppTheme
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = viewModel()
+    onNavigateToContent: (() -> Unit)? = null,
+    viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory)
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -39,6 +41,7 @@ fun LoginScreen(
         onEmailChange = viewModel::onEmailChange,
         onPasswordChange = viewModel::onPasswordChange,
         onCheckRegistration = viewModel::onCheckRegistration,
+        onNavigateToContent = onNavigateToContent,
         modifier = modifier
     )
 }
@@ -49,7 +52,8 @@ fun LoginContent(
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onCheckRegistration: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToContent: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier
@@ -133,6 +137,16 @@ fun LoginContent(
                     modifier = Modifier.padding(16.dp)
                 )
             }
+
+            if (isRegistered && onNavigateToContent != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onNavigateToContent,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Перейти до захищеної сторінки")
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -186,7 +200,8 @@ private fun LoginRegisteredPreview() {
             ),
             onEmailChange = {},
             onPasswordChange = {},
-            onCheckRegistration = {}
+            onCheckRegistration = {},
+            onNavigateToContent = {}
         )
     }
 }

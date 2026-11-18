@@ -2,6 +2,11 @@ package com.example.startupapp
 
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.startupapp.data.SessionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +30,9 @@ data class LoginUiState(
         get() = isEmailValid && password.isNotBlank()
 }
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(
+    private val sessionRepository: SessionRepository = SessionRepository()
+) : ViewModel() {
 
     private val registeredUsers = mapOf(
         "user@mail.com" to "1234",
@@ -64,6 +71,12 @@ class LoginViewModel : ViewModel() {
         val normalizedEmail = state.email.trim().lowercase()
         val isRegistered = registeredUsers[normalizedEmail] == state.password
 
+        if (isRegistered) {
+            sessionRepository.setRegisteredUser(normalizedEmail)
+        } else {
+            sessionRepository.clearSession()
+        }
+
         _uiState.update {
             it.copy(
                 result = if (isRegistered) CheckResult.REGISTERED else CheckResult.NOT_FOUND
@@ -75,7 +88,14 @@ class LoginViewModel : ViewModel() {
         return Patterns.EMAIL_ADDRESS?.matcher(email)?.matches() ?: EMAIL_REGEX.matches(email)
     }
 
-    private companion object {
-        val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+    companion object {
+        private val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = this[APPLICATION_KEY] as StartupApp
+                LoginViewModel(app.sessionRepository)
+            }
+        }
     }
 }
